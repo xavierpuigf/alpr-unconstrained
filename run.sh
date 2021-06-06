@@ -32,7 +32,9 @@ fi
 
 lp_model="data/lp-detector/wpod-net_update1.h5"
 input_dir=''
+# ../data/test_automobiles.txt
 output_dir=''
+# output_all 
 csv_file=''
 
 
@@ -67,13 +69,13 @@ if [ -z "$output_dir" ]; then echo "Ouput dir not set."; usage; exit 1; fi
 if [ -z "$csv_file"   ]; then echo "CSV file not set." ; usage; exit 1; fi
 
 # Check if input dir exists
-check_dir $input_dir
-retval=$?
-if [ $retval -eq 0 ]
-then
-	echo "Input directory ($input_dir) does not exist"
-	exit 1
-fi
+#check_dir $input_dir
+#retval=$?
+#if [ $retval -eq 0 ]
+#then
+#	echo "Input directory ($input_dir) does not exist"
+#	exit 1
+#fi
 
 # Check if output dir exists, if not, create it
 check_dir $output_dir
@@ -89,18 +91,20 @@ set -e
 # Detect vehicles
 python vehicle-detection.py $input_dir $output_dir
 
-# Detect license plates
-python license-plate-detection.py $output_dir $lp_model
+## Detect license plates 
+python license-plate-detection.py $output_dir $lp_model $input_dir
 
 # OCR
-python license-plate-ocr.py $output_dir
+##python license-plate-ocr.py $output_dir
 
 # Draw output and generate list
-python gen-outputs.py $input_dir $output_dir > $csv_file
+#python gen-outputs.py $input_dir $output_dir > $csv_file
+#python gen-outputs.py $input_dir $output_dir
 
 # Clean files and draw output
-rm $output_dir/*_lp.png
-rm $output_dir/*car.png
-rm $output_dir/*_cars.txt
-rm $output_dir/*_lp.txt
-rm $output_dir/*_str.txt
+
+#rm $output_dir/*_lp.png
+#rm $output_dir/*car.png
+#rm $output_dir/*_cars.txt
+#rm $output_dir/*_lp.txt
+#rm $output_dir/*_str.txt

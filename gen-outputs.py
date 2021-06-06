@@ -1,14 +1,16 @@
 import sys
+import ipdb
 import cv2
 import numpy as np
 
-from glob						import glob
-from os.path 					import splitext, basename, isfile
-from src.utils 					import crop_region, image_files_from_folder
-from src.drawing_utils			import draw_label, draw_losangle, write2img
-from src.label 					import lread, Label, readShapes
+from glob                                               import glob
+from os.path                                    import splitext, basename, isfile
+from src.utils                                  import crop_region, image_files_from_folder
+from src.drawing_utils                  import draw_label, draw_losangle, write2img
+from src.label                                  import lread, Label, readShapes
 
 from pdb import set_trace as pause
+import ipdb
 
 
 YELLOW = (  0,255,255)
@@ -16,46 +18,48 @@ RED    = (  0,  0,255)
 
 input_dir = sys.argv[1]
 output_dir = sys.argv[2]
-
-img_files = image_files_from_folder(input_dir)
+#img_files = image_files_from_folder(input_dir)
+with open(input_dir, 'r') as f:
+    imgs_paths = f.readlines()
+    imgs_paths = [x.strip() for x in imgs_paths]
+    img_files = [x for x in imgs_paths if len(x) > 0]
 
 for img_file in img_files:
 
-	bname = splitext(basename(img_file))[0]
+        bname = splitext(basename(img_file))[0]
 
-	I = cv2.imread(img_file)
+        I = cv2.imread(img_file)
 
-	detected_cars_labels = '%s/%s_cars.txt' % (output_dir,bname)
+        detected_cars_labels = '%s/%s_cars.txt' % (output_dir,bname)
 
-	Lcar = lread(detected_cars_labels)
+        Lcar = lread(detected_cars_labels)
 
-	sys.stdout.write('%s' % bname)
+        detected_cars_lp = '%s/%s_lp.txt' % (output_dir,bname)
+        cars_lp = readShapes(detected_cars_lp)
+        #with open(detected_cars_lp, 'r') as f:
+        #    cars_lp = [x.strip() for x in f.readlines()]
+        #    cars_lp = Shape() 
 
-	if Lcar:
+        assert len(cars_lp) == len(Lcar)
 
-		for i,lcar in enumerate(Lcar):
 
-			draw_label(I,lcar,color=YELLOW,thickness=3)
+        sys.stdout.write('%s' % bname)
 
-			lp_label 		= '%s/%s_%dcar_lp.txt'		% (output_dir,bname,i)
-			lp_label_str 	= '%s/%s_%dcar_lp_str.txt'	% (output_dir,bname,i)
+        if Lcar:
 
-			if isfile(lp_label):
+                for i,lcar in enumerate(Lcar):
 
-				Llp_shapes = readShapes(lp_label)
-				pts = Llp_shapes[0].pts*lcar.wh().reshape(2,1) + lcar.tl().reshape(2,1)
-				ptspx = pts*np.array(I.shape[1::-1],dtype=float).reshape(2,1)
-				draw_losangle(I,ptspx,RED,3)
+                        draw_label(I,lcar,color=YELLOW,thickness=3)
 
-				if isfile(lp_label_str):
-					with open(lp_label_str,'r') as f:
-						lp_str = f.read().strip()
-					llp = Label(0,tl=pts.min(1),br=pts.max(1))
-					write2img(I,llp,lp_str)
+                        shape_lp = cars_lp[i]
 
-					sys.stdout.write(',%s' % lp_str)
+                        if shape_lp.isValid():
 
-	cv2.imwrite('%s/%s_output.png' % (output_dir,bname),I)
-	sys.stdout.write('\n')
+                            pts = shape_lp.pts*lcar.wh().reshape(2,1) + lcar.tl().reshape(2,1)
+                            ptspx = pts*np.array(I.shape[1::-1],dtype=float).reshape(2,1)
+                            draw_losangle(I,ptspx,RED,3)
+
+        cv2.imwrite('%s/%s_output.png' % (output_dir,bname),I)
+        sys.stdout.write('\n')
 
 
